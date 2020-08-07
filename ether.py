@@ -1,8 +1,12 @@
 import simpy
 import math
-from scipy.constants import c
+from scipy.constants import c, pi
 
-# NB: sim time are nanoseconds
+# NB: sim time are nanoseconds, distances are in meters
+
+
+frequency = 2400000000 # 2.4 GHz
+wavelength = c/frequency
 
 
 class Ether(object):
@@ -12,20 +16,19 @@ class Ether(object):
         self.channels = []
         self.listeningNodes = []
 
-    def computePropagationDelay(self, senderLatitude, senderLongitude, receiverLatitude, receiverLongitude):
-        distance = math.sqrt(pow(senderLatitude - receiverLatitude, 2) + pow(senderLongitude - receiverLongitude, 2))
-        delay = distance / c
-        return round(delay * pow(10, 9), 0)
+    def computeDistance(self, senderLatitude, senderLongitude, receiverLatitude, receiverLongitude):
+        return math.sqrt(pow(senderLatitude - receiverLatitude, 2) + pow(senderLongitude - receiverLongitude, 2))
 
-    def latency(self, msg, store, node):
-        delay = self.computePropagationDelay(msg[0].latitude, msg[0].longitude, node.latitude, node.longitude)
+    def latencyAndAttenuation(self, phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode):
+        distance = self.computeDistance(sourceLatitude, sourceLongitude, destinationNode.latitude, destinationNode.longitude)
+        delay = round((distance / c) * pow(10, 9), 0)
         yield self.env.timeout(delay)
-        return store.put(msg)
+        receivingPower = phyPkt.power * pow(wavelength/(4 * pi * distance), 2) # NB. used FSPL propagation model
+        phyPkt.power = receivingPower
+        return destinationChannel.put(phyPkt)
 
-    def put(self, msg):
-        if not self.channels:
-            raise RuntimeError('There are no output channels.')
-        events = [self.env.process(self.latency(msg, channel, node)) for channel, node in zip(self.channels, self.listeningNodes)]
+    def transmit(self, phyPkt, sourceLatitude, sourceLongitude):
+        events = [self.env.process(self.latencyAndAttenuation(phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode)) for destinationChannel, destinationNode in zip(self.channels, self.listeningNodes)]
         return self.env.all_of(events)
 
     def getInChannel(self, node):
