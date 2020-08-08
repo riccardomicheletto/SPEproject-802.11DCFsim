@@ -36,3 +36,7 @@ class Ether(object):
         self.channels.append(channel)
         self.listeningNodes.append(node)
         return channel
+
+    def removeInChannel(self, inChannel, node):
+        self.channels.remove(inChannel)
+        self.listeningNodes.remove(node)
