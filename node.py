@@ -1,7 +1,6 @@
 import simpy
 import mac
 
-
 class Node(object):
     def __init__(self, env, name, ether, latitude, longitude):
         self.env = env
@@ -11,6 +10,6 @@ class Node(object):
         self.longitude = longitude
         self.mac = mac.Mac(self.env, self.name, self.ether, self.latitude, self.longitude)
 
-    def send(self, destination, length, payload):
-        print('Time %d: %s sends %s' % (self.env.now, self.name, payload))
-        self.mac.send(destination, length, payload)
+    def send(self, destination, length, id):
+        print('Time %d: %s sends %s' % (self.env.now, self.name, id))
+        self.mac.send(destination, length, id)
