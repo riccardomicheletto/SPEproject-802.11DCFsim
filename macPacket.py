@@ -4,4 +4,4 @@ class MacPacket(object):
         self.destination = destination
         self.length = length    # in bit
         self.id = id
-        self.ack = ack
+        self.ack = ack  # bool

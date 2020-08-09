@@ -21,7 +21,7 @@ class Phy(object):
         phyPkt = phyPacket.PhyPacket(parameters.TRANSMITTING_POWER, False, macPkt) # start of packet
         print('Time %d: %s starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packer = False
-
+        
         yield self.env.timeout(macPkt.length * parameters.BIT_TRANSMISSION_TIME)
         print('Time %d: %s ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packer = False

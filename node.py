@@ -8,8 +8,11 @@ class Node(object):
         self.ether = ether
         self.latitude = latitude
         self.longitude = longitude
-        self.mac = mac.Mac(self.env, self.name, self.ether, self.latitude, self.longitude)
+        self.mac = mac.Mac(self)
 
     def send(self, destination, length, id):
-        print('Time %d: %s sends %s' % (self.env.now, self.name, id))
+        print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
         self.mac.send(destination, length, id)
+
+    def receive(self, id, source):
+        print('Time %d: %s receives %s from %s' % (self.env.now, self.name, id, source))
