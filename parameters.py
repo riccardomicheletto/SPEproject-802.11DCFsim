@@ -3,7 +3,7 @@ from scipy.constants import c
 # NB: sim time are nanoseconds, distances are in meters
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 10000;
+SIM_TIME = 100000;
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP
@@ -24,3 +24,5 @@ SIFS_DURATION = 10000 # 10 microseconds, 802.11n 2.4 GHz
 DIFS_DURATION = SIFS_DURATION + (2 * SLOT_DURATION)
 MIN_MAC_PKT_LENGTH = 34*8 # 34 byte fixed fields of a mac packet
 MAX_MAC_PAYLOAD_LENGTH = 2312*8
+CW_MIN = 32
+CW_MAX = 1024

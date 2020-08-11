@@ -21,7 +21,7 @@ class Phy(object):
         phyPkt = phyPacket.PhyPacket(parameters.TRANSMITTING_POWER, False, macPkt) # start of packet
         print('Time %d: %s starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packer = False
-        
+
         yield self.env.timeout(macPkt.length * parameters.BIT_TRANSMISSION_TIME)
         print('Time %d: %s ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packer = False
@@ -35,6 +35,8 @@ class Phy(object):
             try:
                 (phyPkt, endOfPacket) = yield inChannel.get()
                 #print('Time %d: %s receives signal %s from %s with power %.15f' % (self.env.now, self.name, phyPkt.macPkt.id, phyPkt.macPkt.source, phyPkt.power))
+                if self.mac.isSensing:  # interrupt mac if it is sensing for idle channel
+                    self.mac.sensingTimeout.interrupt(endOfPacket) # I use endOfPacket to generate backoff in case of channel that becomes idle
                 if phyPkt.power > parameters.RADIO_SENSITIVITY and not phyPkt.corrupted:
                     if not endOfPacket:  # start of packet
                         self.receivingPackets.append(phyPkt)
