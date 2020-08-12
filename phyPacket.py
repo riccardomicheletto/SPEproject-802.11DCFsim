@@ -3,3 +3,4 @@ class PhyPacket(object):
         self.power = power
         self.corrupted = corrupted
         self.macPkt = macPkt
+        self.interferingSignals = {}

@@ -3,11 +3,11 @@ from scipy.constants import c
 # NB: sim time are nanoseconds, distances are in meters
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 100000;
+SIM_TIME = 1e10;
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP
-RADIO_SWITCHING_TIME = 1
+RADIO_SWITCHING_TIME = 1    # TODO: check
 RADIO_SENSITIVITY = 1e-12 # power under which signal is not sensed, approximation for QPSK
 
 ### SIGNAL PARAMETERS
@@ -17,6 +17,7 @@ WAVELENGTH = c/FREQUENCY
 ### PHY PARAMETERS
 BITRATE = 72000000 # 72 Mbit/s, 802.11n 20MHz channels
 BIT_TRANSMISSION_TIME = 1/BITRATE * 1e9
+BASE_NOISE = 1e-11  # TODO: check
 
 ### MAC PARAMETERS
 SLOT_DURATION = 20000 # 20 microseconds, 802.11n 2.4 GHz
@@ -26,3 +27,4 @@ MIN_MAC_PKT_LENGTH = 34*8 # 34 byte fixed fields of a mac packet
 MAX_MAC_PAYLOAD_LENGTH = 2312*8
 CW_MIN = 32
 CW_MAX = 1024
+ACK_TIMEOUT = 1e9 # TODO: check

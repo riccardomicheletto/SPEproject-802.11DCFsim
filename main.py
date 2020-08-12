@@ -11,11 +11,14 @@ def main():
     node1 = node.Node(env, "Node 1", eth, 1, 1)
     node2 = node.Node(env, "Node 2", eth, 45, 26)
     node3 = node.Node(env, "Node 3", eth, 2, 3)
+    #node4 = node.Node(env, "Node 4", eth, 6, 2)
+
 
     #env.process(node2.start())
     #env.process(node3.start())
     #env.process(node1.send("Node 2", 10, "primo messaggio"))
-    node1.send("Node 2", 8, "primo messaggio")
+    node1.send("Node 3", 1000, "1st MSG")
+    node2.send("Node 3", 20, "2nd MSG")
     #yield self.env.timeout(10)
     #env.process(node2.send("Node 3", 10, "secondo messaggio"))
 

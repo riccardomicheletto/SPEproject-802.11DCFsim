@@ -37,34 +37,54 @@ class Mac(object):
             if macPkt.id in self.pendingPackets:    # packet could not be in pendingPackets if timeout has expired but ack still arrive
                 self.pendingPackets[macPkt.id].interrupt()
 
-    def waitAck(self, pktId):
+    def waitAck(self, macPkt):
         try:
-            yield self.env.timeout(7000)
+            yield self.env.timeout(parameters.ACK_TIMEOUT)
             # timeout expired, resend
-            self.pendingPackets.pop(pktId)
-            # TODO: resend
+            print('Time %d: %s retransmit %s to %s' % (self.env.now, self.name, macPkt.id, macPkt.destination))
+            self.pendingPackets.pop(macPkt.id)
+            self.retransmissionCounter[macPkt.id] += 1
+            self.isSensing = True
+            self.sensingTimeout = self.env.process(self.waitIdleAndSend(macPkt))
+
         except simpy.Interrupt:
             # ack received
-            self.pendingPackets.pop(pktId)
+            self.pendingPackets.pop(macPkt.id)
+            self.retransmissionCounter.pop(macPkt.id)
             # TODO: log stats for packet delivered
 
     def waitIdleAndSend(self, macPkt):
+        otherOngoingTransmissions = 0
         timeout = parameters.DIFS_DURATION
         backoff = 0
+        if self.retransmissionCounter[macPkt.id] != 0:  # add backoff in case of retransmission
+            backoff = random.randint(0, min(pow(2,self.retransmissionCounter[macPkt.id]-1)*parameters.CW_MIN, parameters.CW_MAX)-1)
+            timeout += backoff
+
         while True:
             try:
-                if self.retransmissionCounter[macPkt.id] != 0:  # add backoff in case of retransmission
-                    backoff = random.randint(0, min(pow(2,self.retransmissionCounter[macPkt.id]-1)*parameters.CW_MIN, parameters.CW_MAX)-1)
-                    timeout += backoff
+                while timeout > 0:
+                    yield self.env.timeout(1)
+                    timeout -= 1
 
-                yield self.env.timeout(timeout)
                 self.isSensing = False
 
                 self.env.process(self.phy.send(macPkt))
-                self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt.id))
+                self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt))
                 return
             except simpy.Interrupt as endOfPacket:
-                if endOfPacket.cause:   # this is not a retransmission, but backoff is used
-                    self.retransmissionCounter[macPkt.id] = 1
-                    # TODO: freeze backoff and then resume it
+                if not endOfPacket.cause:
+                    otherOngoingTransmissions += 1
+                else:
+                    otherOngoingTransmissions = max(0, otherOngoingTransmissions-1)
+
+                if otherOngoingTransmissions == 0:  # resume timeout
+                    if backoff == 0:    # need to add backoff, even if this is not a retransmission
+                        backoff = random.randint(0, parameters.CW_MIN-1)
+                        timeout += backoff
+                    elif timeout > backoff: # backoff has not been consumed, new timeout is DIFS + backoff
+                        timeout = parameters.DIFS_DURATION + backoff
+                    else:   # backoff has been consumed, new timeout is DIFS + remaining backoff
+                        backoff = timeout
+                        timeout = parameters.DIFS_DURATION + backoff
                 continue
