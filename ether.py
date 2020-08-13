@@ -17,7 +17,7 @@ class Ether(object):
         distance = self.computeDistance(sourceLatitude, sourceLongitude, destinationNode.latitude, destinationNode.longitude)
         delay = round((distance / c) * pow(10, 9), 0)
         yield self.env.timeout(delay)
-        receivingPower = parameters.TRANSMITTING_POWER * pow(parameters.WAVELENGTH/(4 * pi * distance), 2) # NB. used FSPL propagation model
+        receivingPower = parameters.TRANSMITTING_POWER * pow(parameters.WAVELENGTH/(4 * pi * distance), 2) # NB. used FSPL propagation model with isotropic antennas
         phyPkt.power = receivingPower
         return destinationChannel.put((phyPkt, endOfPacket))
 

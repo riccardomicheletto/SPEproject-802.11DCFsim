@@ -1,6 +1,14 @@
 from scipy.constants import c
 
-# NB: sim time are nanoseconds, distances are in meters
+# NB: sim time are nanoseconds, distances are in meters, powers in watt
+
+# 802.11g parameters. 802.11g is the last standard not adopting MIMO. MIMO boost bitrate
+# using concurrent transmissions and other techniques. Values from wikipedia
+# https://en.wikipedia.org/wiki/IEEE_802.11
+# https://en.wikipedia.org/wiki/DCF_Interframe_Space
+# https://en.wikipedia.org/wiki/Short_Interframe_Space
+# Freq: 2.4 GHz, OFDM, 20 MHz bandwidth, 54 Mbit/s
+
 
 ### SIMULATION PARAMETERS
 SIM_TIME = 1e10;
@@ -8,23 +16,26 @@ SIM_TIME = 1e10;
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP
 RADIO_SWITCHING_TIME = 1    # TODO: check
-RADIO_SENSITIVITY = 1e-12 # power under which signal is not sensed, approximation for QPSK
+RADIO_SENSITIVITY = 1e-10 # power under which signal is not sensed
 
 ### SIGNAL PARAMETERS
 FREQUENCY = 2400000000 # 2.4 GHz
 WAVELENGTH = c/FREQUENCY
 
 ### PHY PARAMETERS
-BITRATE = 72000000 # 72 Mbit/s, 802.11n 20MHz channels
+BITRATE = 54000000 # 54 Mbit/s, 802.11g 20 MHz channels
 BIT_TRANSMISSION_TIME = 1/BITRATE * 1e9
-BASE_NOISE = 1e-11  # TODO: check
+NOISE_FLOOR = 1e-12
+PHY_HEADER_LENGTH = 128
 
 ### MAC PARAMETERS
-SLOT_DURATION = 20000 # 20 microseconds, 802.11n 2.4 GHz
-SIFS_DURATION = 10000 # 10 microseconds, 802.11n 2.4 GHz
+SLOT_DURATION = 20000 # 20 microseconds, 802.11g 2.4 GHz
+SIFS_DURATION = 10000 # 10 microseconds, 802.11g 2.4 GHz
 DIFS_DURATION = SIFS_DURATION + (2 * SLOT_DURATION)
-MIN_MAC_PKT_LENGTH = 34*8 # 34 byte fixed fields of a mac packet
+MAC_HEADER_LENGTH = 34*8 # 34 byte fixed fields of a mac packet
 MAX_MAC_PAYLOAD_LENGTH = 2312*8
-CW_MIN = 32
+ACK_LENGTH = MAC_HEADER_LENGTH
+CW_MIN = 16
 CW_MAX = 1024
-ACK_TIMEOUT = 1e9 # TODO: check
+# ack timeout = transmission time of biggest possible pkt + rtt for 300m distance + sifs + ack transmission time
+ACK_TIMEOUT = (MAX_MAC_PAYLOAD_LENGTH + MAC_HEADER_LENGTH + PHY_HEADER_LENGTH) * BIT_TRANSMISSION_TIME + 2 * round((300 / c) * pow(10, 9), 0) + SIFS_DURATION + ACK_LENGTH * BIT_TRANSMISSION_TIME

@@ -23,7 +23,7 @@ class Phy(object):
         print('Time %d: %s starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packer = False
 
-        yield self.env.timeout(macPkt.length * parameters.BIT_TRANSMISSION_TIME)
+        yield self.env.timeout(macPkt.length * parameters.BIT_TRANSMISSION_TIME + parameters.PHY_HEADER_LENGTH)
         print('Time %d: %s ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packer = False
 
@@ -54,7 +54,7 @@ class Phy(object):
                             self.receivingPackets.remove(phyPkt)
                             sinr = self.computeSinr(phyPkt)
                             if sinr > 1:    # signal greater than noise and inteference
-                                self.mac.handleReceivedPacket(phyPkt.macPkt)
+                                self.env.process(self.mac.handleReceivedPacket(phyPkt.macPkt))
 
 
             except simpy.Interrupt as macPkt:        # listening can be interrupted by a message sending
@@ -72,4 +72,4 @@ class Phy(object):
         interference = 0
         for interferingSignal in phyPkt.interferingSignals:
             interference += float(phyPkt.interferingSignals[interferingSignal])
-        return phyPkt.power/(interference + parameters.BASE_NOISE)
+        return phyPkt.power/(interference + parameters.NOISE_FLOOR)
