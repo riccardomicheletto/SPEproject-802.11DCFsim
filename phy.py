@@ -20,12 +20,28 @@ class Phy(object):
 
     def encapsulateAndTransmit(self, macPkt):
         phyPkt = phyPacket.PhyPacket(parameters.TRANSMITTING_POWER, False, macPkt) # start of packet
-        print('Time %d: %s starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
-        self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packer = False
+        if macPkt.ack:
+            print('Time %d: %s PHY starts transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
+        else:
+            print('Time %d: %s PHY starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
+        self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
 
-        yield self.env.timeout(macPkt.length * parameters.BIT_TRANSMISSION_TIME + parameters.PHY_HEADER_LENGTH)
-        print('Time %d: %s ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
-        self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packer = False
+        duration = macPkt.length * parameters.BIT_TRANSMISSION_TIME + parameters.PHY_HEADER_LENGTH
+
+        while True:
+            if duration < parameters.SLOT_DURATION:
+                yield self.env.timeout(duration)    # wait only remaining time
+                break
+            yield self.env.timeout(parameters.SLOT_DURATION) # send a signal every slot
+            self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
+            duration -= parameters.SLOT_DURATION
+
+
+        if macPkt.ack:
+            print('Time %d: %s PHY ends transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
+        else:
+            print('Time %d: %s PHY ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
+        self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packet = True
 
     def listen(self):
         inChannel = self.ether.getInChannel(self)
@@ -45,17 +61,16 @@ class Phy(object):
                 #print('Time %d: %s receives signal %s from %s with power %.15f' % (self.env.now, self.name, phyPkt.macPkt.id, phyPkt.macPkt.source, phyPkt.power))
 
                 if self.mac.isSensing:  # interrupt mac if it is sensing for idle channel
-                    self.mac.sensingTimeout.interrupt(endOfPacket) # I use endOfPacket to generate backoff in case of channel that becomes idle
+                    self.mac.sensingTimeout.interrupt() # I use endOfPacket to generate backoff in case of channel that becomes idle
                 if phyPkt.power > parameters.RADIO_SENSITIVITY and not phyPkt.corrupted:
-                    if not endOfPacket:  # start of packet
+                    if not endOfPacket and phyPkt not in self.receivingPackets:  # start of packet
                         self.receivingPackets.append(phyPkt)
-                    else:   # end of packet
-                        if phyPkt in self.receivingPackets:     # in consider is only if I received the begin of the packer, otherwise I ignore it, as it is for sure corrupted
+                    elif endOfPacket:   # end of packet
+                        if phyPkt in self.receivingPackets:     # in consider is only if I received the begin of the packet, otherwise I ignore it, as it is for sure corrupted
                             self.receivingPackets.remove(phyPkt)
                             sinr = self.computeSinr(phyPkt)
                             if sinr > 1:    # signal greater than noise and inteference
                                 self.env.process(self.mac.handleReceivedPacket(phyPkt.macPkt))
-
 
             except simpy.Interrupt as macPkt:        # listening can be interrupted by a message sending
                 self.ether.removeInChannel(inChannel, self)

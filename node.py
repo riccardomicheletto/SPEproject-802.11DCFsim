@@ -11,6 +11,8 @@ class Node(object):
         self.mac = mac.Mac(self)
 
     def send(self, destination, length, id):
+        if self.name == "Node 2":
+            yield self.env.timeout(2000)
         print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
         self.mac.send(destination, length, id)
 

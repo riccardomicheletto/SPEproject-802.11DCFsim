@@ -17,8 +17,8 @@ def main():
     #env.process(node2.start())
     #env.process(node3.start())
     #env.process(node1.send("Node 2", 10, "primo messaggio"))
-    node1.send("Node 3", 8184, "1st MSG")
-    node2.send("Node 3", 20, "2nd MSG")
+    env.process(node1.send("Node 3", 8184, "1st MSG"))
+    env.process(node2.send("Node 3", 20, "2nd MSG"))
     #yield self.env.timeout(10)
     #env.process(node2.send("Node 3", 10, "secondo messaggio"))
 
