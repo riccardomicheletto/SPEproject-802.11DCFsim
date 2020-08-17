@@ -1,6 +1,7 @@
 import simpy
 import phyPacket
 import parameters
+import traceback
 
 class Phy(object):
     def __init__(self, mac):
@@ -12,8 +13,12 @@ class Phy(object):
         self.longitude = self.mac.longitude
         self.listen = self.env.process(self.listen())
         self.receivingPackets = []
+        self.isSending = False  # keep radio state (Tx/Rx)
 
     def send(self, macPkt):
+        if self.isSending:
+            print('=====================INVALID!!!')
+        self.isSending = True
         self.receivingPackets.clear() # I switch to transmitting mode, so I drop all ongoing receptions
         yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
         self.listen.interrupt(macPkt)
@@ -36,12 +41,11 @@ class Phy(object):
             self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
             duration -= parameters.SLOT_DURATION
 
-
+        self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packet = True
         if macPkt.ack:
             print('Time %d: %s PHY ends transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
         else:
             print('Time %d: %s PHY ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
-        self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packet = True
 
     def listen(self):
         inChannel = self.ether.getInChannel(self)
@@ -82,6 +86,7 @@ class Phy(object):
                 inChannel = self.ether.getInChannel(self)
                 yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
                 print('Time %d: %s starts listening' % (self.env.now, self.name))
+                self.isSending = False
 
     def computeSinr(self, phyPkt):
         interference = 0

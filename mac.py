@@ -16,6 +16,7 @@ class Mac(object):
         self.pendingPackets = {}    # associate packets I'm trying to transmit and timeouts for retransmissions
         self.retransmissionCounter = {}     # associate packets I'm trying to transmit and transmission attempts
         self.isSensing = False
+        self.packetsToSend = []
 
     def send(self, destination, payloadLength, id):
         length = payloadLength + parameters.MAC_HEADER_LENGTH
@@ -56,6 +57,9 @@ class Mac(object):
             # TODO: log stats for packet delivered
 
     def waitIdleAndSend(self, macPkt):
+        while self.phy.isSending:   # I cannot sense while sending
+            yield self.env.timeout(1)   # wait for my phy to finish sending other packets
+
         timeout = parameters.DIFS_DURATION
         backoff = 0
         if self.retransmissionCounter[macPkt.id] != 0:  # add backoff in case of retransmission
@@ -68,8 +72,17 @@ class Mac(object):
                     yield self.env.timeout(1)
                     timeout -= 1
 
+                    if self.phy.isSending:   # I cannot sense while sending
+                        # if a trasmission occours during the sensing I restart the sensing phase from scratch
+                        timeout = parameters.DIFS_DURATION + backoff
+
                 self.isSensing = False
 
+                if self.phy.isSending:
+                    # if a trasmission occours during the sensing I restart the sensing phase from scratch
+                    timeout = parameters.DIFS_DURATION + backoff
+                    continue
+                
                 self.env.process(self.phy.send(macPkt))
                 self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt))
                 return
