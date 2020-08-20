@@ -11,7 +11,7 @@ from scipy.constants import c
 
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 1e10;
+SIM_TIME = 40 * 1e9;
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP

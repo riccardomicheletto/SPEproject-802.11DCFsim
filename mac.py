@@ -3,6 +3,7 @@ import phy
 import macPacket
 import parameters
 import random
+import stats
 
 class Mac(object):
     def __init__(self, node):
@@ -12,6 +13,7 @@ class Mac(object):
         self.ether = self.node.ether
         self.latitude = self.node.latitude
         self.longitude = self.node.longitude
+        self.stats = self.node.stats
         self.phy = phy.Phy(self)
         self.pendingPackets = {}    # associate packets I'm trying to transmit and timeouts for retransmissions
         self.retransmissionCounter = {}     # associate packets I'm trying to transmit and transmission attempts
@@ -21,6 +23,7 @@ class Mac(object):
     def send(self, destination, payloadLength, id):
         length = payloadLength + parameters.MAC_HEADER_LENGTH
         macPkt = macPacket.MacPacket(self.name, destination, length, id, False)
+        self.stats.logGeneratedPacket(self.env.now)
 
         # sensing phase
         self.retransmissionCounter[macPkt.id] = 0
@@ -31,6 +34,7 @@ class Mac(object):
         if macPkt.destination == self.name and not macPkt.ack:  # send ack to normal packets
             print('Time %d: %s MAC receives packet %s from %s and sends ACK' % (self.env.now, self.name, macPkt.id, macPkt.source))
             self.node.receive(macPkt.id, macPkt.source)
+            self.stats.logDeliveredPacket(self.env.now)
             ack = macPacket.MacPacket(self.name, macPkt.source, parameters.ACK_LENGTH, macPkt.id, True)
             yield self.env.timeout(parameters.SIFS_DURATION)
             self.env.process(self.phy.send(ack))
@@ -54,7 +58,6 @@ class Mac(object):
             # ack received
             self.pendingPackets.pop(macPkt.id)
             self.retransmissionCounter.pop(macPkt.id)
-            # TODO: log stats for packet delivered
 
     def waitIdleAndSend(self, macPkt):
         while self.phy.isSending:   # I cannot sense while sending
@@ -82,8 +85,9 @@ class Mac(object):
                     # if a trasmission occours during the sensing I restart the sensing phase from scratch
                     timeout = parameters.DIFS_DURATION + backoff
                     continue
-                
+
                 self.env.process(self.phy.send(macPkt))
+                self.stats.logSentPacket(self.env.now)
                 self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt))
                 return
             except simpy.Interrupt:
