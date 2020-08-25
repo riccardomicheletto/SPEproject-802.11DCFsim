@@ -2,6 +2,7 @@ import simpy
 import math
 from scipy.constants import c, pi
 import parameters
+import random
 
 class Ether(object):
     def __init__(self, env, capacity=simpy.core.Infinity):
@@ -19,6 +20,11 @@ class Ether(object):
         yield self.env.timeout(delay)
         receivingPower = parameters.TRANSMITTING_POWER * pow(parameters.WAVELENGTH/(4 * pi * distance), 2) # NB. used FSPL propagation model with isotropic antennas
         phyPkt.power = receivingPower
+
+        if endOfPacket:
+            if random.randint(0,100) < parameters.PACKET_LOSS_RATE * 100:
+                phyPkt.corrupted = True
+
         return destinationChannel.put((phyPkt, endOfPacket))
 
     def transmit(self, phyPkt, sourceLatitude, sourceLongitude, endOfPacket):

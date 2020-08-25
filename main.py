@@ -4,25 +4,25 @@ import phy
 import ether
 import parameters
 import stats
+import random
 
 def main():
     env = simpy.Environment()
     eth = ether.Ether(env)
     statistics = stats.Stats()
 
-    node1 = node.Node(env, "Node 1", eth, 0, 0, statistics)
-    node2 = node.Node(env, "Node 2", eth, 10, 30, statistics)
-    node3 = node.Node(env, "Node 3", eth, 2, 3, statistics)
-    node4 = node.Node(env, "Node 4", eth, 6, 2, statistics)
+    nodes = []
 
-    #env.process(node1.send("Node 3", 8184, "1st MSG"))
-    #env.process(node2.send("Node 3", 20, "2nd MSG"))
-    #env.process(node3.send("Node 2", 200, "3rd MSG"))
+    for i in range(0, parameters.NUMBER_OF_NODES):
+        name = "Node" + str(i)
+        nodes.append(node.Node(env, name, eth, random.randint(0,50), random.randint(0,50), statistics))
 
-    env.process(node1.keepSending(1, 100, [node2.name, node3.name, node4.name]))
-    env.process(node2.keepSending(1, 100, [node1.name, node3.name, node4.name]))
-    env.process(node3.keepSending(1, 100, [node1.name, node2.name, node4.name]))
-    env.process(node4.keepSending(1, 100, [node1.name, node2.name, node3.name]))
+    for i in range(0, parameters.NUMBER_OF_NODES):
+        destinations = []
+        for j in range(0, parameters.NUMBER_OF_NODES):
+            if i != j:
+                destinations.append(nodes[j].name)
+        env.process(nodes[i].keepSending(1, 1000, destinations))
 
     env.run(until=parameters.SIM_TIME)
 

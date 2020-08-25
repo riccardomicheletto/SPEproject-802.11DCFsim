@@ -32,14 +32,16 @@ class Mac(object):
 
     def handleReceivedPacket(self, macPkt):
         if macPkt.destination == self.name and not macPkt.ack:  # send ack to normal packets
-            print('Time %d: %s MAC receives packet %s from %s and sends ACK' % (self.env.now, self.name, macPkt.id, macPkt.source))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s MAC receives packet %s from %s and sends ACK' % (self.env.now, self.name, macPkt.id, macPkt.source))
             self.node.receive(macPkt.id, macPkt.source)
             self.stats.logDeliveredPacket(self.env.now)
             ack = macPacket.MacPacket(self.name, macPkt.source, parameters.ACK_LENGTH, macPkt.id, True)
             yield self.env.timeout(parameters.SIFS_DURATION)
             self.env.process(self.phy.send(ack))
         elif macPkt.destination == self.name:
-            print('Time %d: %s MAC receives ACK %s from %s' % (self.env.now, self.name, macPkt.id, macPkt.source))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s MAC receives ACK %s from %s' % (self.env.now, self.name, macPkt.id, macPkt.source))
             if macPkt.id in self.pendingPackets:    # packet could not be in pendingPackets if timeout has expired but ack still arrive
                 self.pendingPackets[macPkt.id].interrupt()
 
@@ -48,7 +50,8 @@ class Mac(object):
             yield self.env.timeout(parameters.ACK_TIMEOUT)
             # timeout expired, resend
             # TODO: check that I don't retransmit forever if destination is unreachable
-            print('Time %d: %s MAC retransmit %s to %s' % (self.env.now, self.name, macPkt.id, macPkt.destination))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s MAC retransmit %s to %s' % (self.env.now, self.name, macPkt.id, macPkt.destination))
             self.pendingPackets.pop(macPkt.id)
             self.retransmissionCounter[macPkt.id] += 1
             self.isSensing = True

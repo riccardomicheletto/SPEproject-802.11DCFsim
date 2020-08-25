@@ -16,8 +16,6 @@ class Phy(object):
         self.isSending = False  # keep radio state (Tx/Rx)
 
     def send(self, macPkt):
-        if self.isSending:
-            print('=====================INVALID!!!')
         self.isSending = True
         self.receivingPackets.clear() # I switch to transmitting mode, so I drop all ongoing receptions
         yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
@@ -26,9 +24,11 @@ class Phy(object):
     def encapsulateAndTransmit(self, macPkt):
         phyPkt = phyPacket.PhyPacket(parameters.TRANSMITTING_POWER, False, macPkt) # start of packet
         if macPkt.ack:
-            print('Time %d: %s PHY starts transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s PHY starts transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
         else:
-            print('Time %d: %s PHY starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s PHY starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
         self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
 
         duration = macPkt.length * parameters.BIT_TRANSMISSION_TIME + parameters.PHY_HEADER_LENGTH
@@ -43,14 +43,17 @@ class Phy(object):
 
         self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packet = True
         if macPkt.ack:
-            print('Time %d: %s PHY ends transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s PHY ends transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
         else:
-            print('Time %d: %s PHY ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s PHY ends transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
 
     def listen(self):
         inChannel = self.ether.getInChannel(self)
         yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
-        print('Time %d: %s starts listening' % (self.env.now, self.name))
+        if parameters.PRINT_LOGS:
+            print('Time %d: %s starts listening' % (self.env.now, self.name))
 
         while True:
             try:
@@ -79,13 +82,15 @@ class Phy(object):
             except simpy.Interrupt as macPkt:        # listening can be interrupted by a message sending
                 self.ether.removeInChannel(inChannel, self)
                 yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
-                print('Time %d: %s stops listening' % (self.env.now, self.name))
+                if parameters.PRINT_LOGS:
+                    print('Time %d: %s stops listening' % (self.env.now, self.name))
 
                 yield self.env.process(self.encapsulateAndTransmit(macPkt.cause))
 
                 inChannel = self.ether.getInChannel(self)
                 yield self.env.timeout(parameters.RADIO_SWITCHING_TIME) # simulate time of radio switching
-                print('Time %d: %s starts listening' % (self.env.now, self.name))
+                if parameters.PRINT_LOGS:
+                    print('Time %d: %s starts listening' % (self.env.now, self.name))
                 self.isSending = False
 
     def computeSinr(self, phyPkt):

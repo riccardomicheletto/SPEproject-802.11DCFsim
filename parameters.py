@@ -11,11 +11,13 @@ from scipy.constants import c
 
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 40 * 1e9;
+SIM_TIME = 50 * 1e9
+PRINT_LOGS = False
+NUMBER_OF_NODES = 20
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP
-RADIO_SWITCHING_TIME = 1    # TODO: check
+RADIO_SWITCHING_TIME = 100
 RADIO_SENSITIVITY = 1e-10 # power under which signal is not sensed
 
 ### SIGNAL PARAMETERS
@@ -27,6 +29,7 @@ BITRATE = 54000000 # 54 Mbit/s, 802.11g 20 MHz channels
 BIT_TRANSMISSION_TIME = 1/BITRATE * 1e9
 NOISE_FLOOR = 1e-12
 PHY_HEADER_LENGTH = 128
+PACKET_LOSS_RATE = 0.01 # 1% of packets are corrupted
 
 ### MAC PARAMETERS
 SLOT_DURATION = 20000 # 20 microseconds, 802.11g 2.4 GHz

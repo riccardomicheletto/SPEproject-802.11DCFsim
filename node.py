@@ -16,11 +16,13 @@ class Node(object):
     def send(self, destination, length, id):
         if self.name == "Node 2":
             yield self.env.timeout(2000)
-        print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
+        if parameters.PRINT_LOGS:
+            print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
         self.mac.send(destination, length, id)
 
     def receive(self, id, source):
-        print('Time %d: %s receives %s from %s' % (self.env.now, self.name, id, source))
+        if parameters.PRINT_LOGS:
+            print('Time %d: %s receives %s from %s' % (self.env.now, self.name, id, source))
 
     def keepSending(self, rate, destinationNodes):
         while True:
@@ -29,7 +31,8 @@ class Node(object):
             destination = destinationNodes[random.randint(0, len(destinationNodes)-1)]
             length = random.randint(0, parameters.MAX_MAC_PAYLOAD_LENGTH)
             id = str(self.env.now) + '_' + self.name + '_' + destination
-            print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
             self.mac.send(destination, length, id)
 
     def keepSending(self, startingRate, finalRate, destinationNodes):
@@ -41,5 +44,6 @@ class Node(object):
             destination = destinationNodes[random.randint(0, len(destinationNodes)-1)]
             length = random.randint(0, parameters.MAX_MAC_PAYLOAD_LENGTH)
             id = str(self.env.now) + '_' + self.name + '_' + destination
-            print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
+            if parameters.PRINT_LOGS:
+                print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
             self.mac.send(destination, length, id)
