@@ -23,7 +23,7 @@ class Mac(object):
     def send(self, destination, payloadLength, id):
         length = payloadLength + parameters.MAC_HEADER_LENGTH
         macPkt = macPacket.MacPacket(self.name, destination, length, id, False)
-        self.stats.logGeneratedPacket(self.env.now)
+        self.stats.logGeneratedPacket(id, self.env.now)
 
         # sensing phase
         self.retransmissionCounter[macPkt.id] = 0
@@ -35,7 +35,7 @@ class Mac(object):
             if parameters.PRINT_LOGS:
                 print('Time %d: %s MAC receives packet %s from %s and sends ACK' % (self.env.now, self.name, macPkt.id, macPkt.source))
             self.node.receive(macPkt.id, macPkt.source)
-            self.stats.logDeliveredPacket(self.env.now)
+            self.stats.logDeliveredPacket(macPkt.id, self.env.now)
             ack = macPacket.MacPacket(self.name, macPkt.source, parameters.ACK_LENGTH, macPkt.id, True)
             yield self.env.timeout(parameters.SIFS_DURATION)
             self.env.process(self.phy.send(ack))

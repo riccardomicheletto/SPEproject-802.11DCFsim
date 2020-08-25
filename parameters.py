@@ -11,7 +11,7 @@ from scipy.constants import c
 
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 8 * 1e9
+SIM_TIME = 3 * 1e9
 PRINT_LOGS = True
 NUMBER_OF_NODES = 4
 STARTING_RATE = 1
