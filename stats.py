@@ -6,12 +6,16 @@ class Stats(object):
     def __init__(self):
         self.generatedPacketsTimes = {}     # packet id - timestamp of generation
         self.deliveredPacketsTimes = {}    # packet id - timestamp of delivery
+        self.retransmissionTimes = []   # timestamps of retransmissions
 
     def logGeneratedPacket(self, id, timestamp):
         self.generatedPacketsTimes[id] = timestamp * 1e-9
 
     def logDeliveredPacket(self, id, timestamp):
         self.deliveredPacketsTimes[id] = timestamp * 1e-9
+
+    def logRetransmission(self, timestamp):
+        self.retransmissionTimes.append(timestamp * 1e-9)
 
     def printGeneratedPacketTimes(self):
         for generatedPacket in self.generatedPacketsTimes:
@@ -92,3 +96,22 @@ class Stats(object):
         plt.ylabel('Delay')
         plt.legend()
         plt.savefig('results/delays.pdf',bbox_inches='tight', dpi=250)
+
+    def plotRetransmissions(self):
+        plt.figure(4)
+        retransmissionsEverySecond = []
+        for i in range(int(parameters.SIM_TIME * 1e-9)):
+            retransmissionsEverySecond.append(0)
+
+        for timestamp in self.retransmissionTimes:
+            retransmissionsEverySecond[int(timestamp)] += 1
+
+        seconds = np.arange(0, int(parameters.SIM_TIME * 1e-9), 1)
+
+        plt.plot(seconds, retransmissionsEverySecond, 'r:', label='Generated')
+
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('Retransmissions')
+        plt.legend()
+        plt.savefig('results/retransmissions.pdf',bbox_inches='tight', dpi=250)

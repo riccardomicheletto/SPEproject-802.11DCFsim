@@ -32,6 +32,7 @@ def main():
     statistics.plotCumulativePackets()
     statistics.plotThroughput()
     statistics.plotDelays()
+    statistics.plotRetransmissions()
 
 def printProgress(env):
     while True:
