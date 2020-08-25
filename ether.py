@@ -14,8 +14,8 @@ class Ether(object):
     def computeDistance(self, senderLatitude, senderLongitude, receiverLatitude, receiverLongitude):
         return math.sqrt(pow(senderLatitude - receiverLatitude, 2) + pow(senderLongitude - receiverLongitude, 2))
 
-    def latencyAndAttenuation(self, phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, endOfPacket):
-        distance = self.computeDistance(sourceLatitude, sourceLongitude, destinationNode.latitude, destinationNode.longitude)
+    def latencyAndAttenuation(self, phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, beginOfPacket, endOfPacket):
+        distance = self.computeDistance(sourceLatitude, sourceLongitude, destinationNode.latitude, destinationNode.longitude) + 1e-3 # add 1mm to avoid distance=0
         delay = round((distance / c) * pow(10, 9), 0)
         yield self.env.timeout(delay)
         receivingPower = parameters.TRANSMITTING_POWER * pow(parameters.WAVELENGTH/(4 * pi * distance), 2) # NB. used FSPL propagation model with isotropic antennas
@@ -25,10 +25,10 @@ class Ether(object):
             if random.randint(0,100) < parameters.PACKET_LOSS_RATE * 100:
                 phyPkt.corrupted = True
 
-        return destinationChannel.put((phyPkt, endOfPacket))
+        return destinationChannel.put((phyPkt, beginOfPacket, endOfPacket))
 
-    def transmit(self, phyPkt, sourceLatitude, sourceLongitude, endOfPacket):
-        events = [self.env.process(self.latencyAndAttenuation(phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, endOfPacket)) for destinationChannel, destinationNode in zip(self.channels, self.listeningNodes)]
+    def transmit(self, phyPkt, sourceLatitude, sourceLongitude, beginOfPacket, endOfPacket):
+        events = [self.env.process(self.latencyAndAttenuation(phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, beginOfPacket, endOfPacket)) for destinationChannel, destinationNode in zip(self.channels, self.listeningNodes)]
         return self.env.all_of(events)
 
     def getInChannel(self, node):

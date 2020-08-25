@@ -5,14 +5,10 @@ import parameters
 class Stats(object):
     def __init__(self):
         self.generatedPacketsTimes = []     # list of timestamps of generated packets
-        self.sentPacketsTimes = []  # list of timestamps of sent packets
         self.deliveredPacketsTimes = []    # list of timestamps of delivered packets
 
     def logGeneratedPacket(self, timestamp):
         self.generatedPacketsTimes.append(timestamp * 1e-9)
-
-    def logSentPacket(self, timestamp):
-        self.sentPacketsTimes.append(timestamp * 1e-9)
 
     def logDeliveredPacket(self, timestamp):
         self.deliveredPacketsTimes.append(timestamp * 1e-9)
@@ -21,31 +17,32 @@ class Stats(object):
         for generatedPacketTime in self.generatedPacketsTimes:
             print (generatedPacketTime)
 
-    def printSentPacketTimes(self):
-        for sentPacketTime in self.sentPacketsTimes:
-            print (sentPacketTime)
-
     def printDeliveredPacketTimes(self):
         for deliveredPacketTime in self.deliveredPacketsTimes:
             print (deliveredPacketTime)
 
     def plotCumulativePackets(self):
-        cumulativePackets = [1]
-        for i in range(1, len(self.generatedPacketsTimes)):
-            cumulativePackets.append(cumulativePackets[i-1] + 1)
+        plt.figure(1)
 
-        plt.plot(self.generatedPacketsTimes, cumulativePackets, 'r.', label='Generated')
-        plt.plot(self.sentPacketsTimes, cumulativePackets, 'bd', label='Sent')
-        plt.plot(self.deliveredPacketsTimes, cumulativePackets, 'g,', label='Delivered')
+        cumulativeGeneratedPackets = [1]
+        for i in range(1, len(self.generatedPacketsTimes)):
+            cumulativeGeneratedPackets.append(cumulativeGeneratedPackets[i-1] + 1)
+
+        cumulativeDeliveredPackets = [1]
+        for i in range(1, len(self.deliveredPacketsTimes)):
+            cumulativeDeliveredPackets.append(cumulativeDeliveredPackets[i-1] + 1)
+
+        plt.plot(self.generatedPacketsTimes, cumulativeGeneratedPackets, 'r:', label='Generated')
+        plt.plot(self.deliveredPacketsTimes, cumulativeDeliveredPackets, 'g:', label='Delivered')
 
         plt.legend()
         plt.xlabel('Time')
         plt.ylabel('Packets')
         plt.legend()
-        plt.savefig('packets.pdf',bbox_inches='tight', dpi=250)
+        plt.savefig('results/packets.pdf',bbox_inches='tight', dpi=250)
 
     def plotThroughput(self):
-        # plot throughput
+        plt.figure(2)
         packetsGeneratedEverySecond = []
         packetsDeliveredEverySecond = []
         for i in range(int(parameters.SIM_TIME * 1e-9)):
@@ -60,11 +57,11 @@ class Stats(object):
 
         seconds = np.arange(0, int(parameters.SIM_TIME * 1e-9), 1)
 
-        plt.plot(seconds, packetsGeneratedEverySecond, 'r.', label='Generated')
-        plt.plot(seconds, packetsDeliveredEverySecond, 'g,', label='Delivered')
+        plt.plot(seconds, packetsGeneratedEverySecond, 'r:', label='Generated')
+        plt.plot(seconds, packetsDeliveredEverySecond, 'g:', label='Delivered')
 
         plt.legend()
         plt.xlabel('Time')
         plt.ylabel('Throughput')
         plt.legend()
-        plt.savefig('throughput.pdf',bbox_inches='tight', dpi=250)
+        plt.savefig('results/throughput.pdf',bbox_inches='tight', dpi=250)

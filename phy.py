@@ -29,7 +29,7 @@ class Phy(object):
         else:
             if parameters.PRINT_LOGS:
                 print('Time %d: %s PHY starts transmission of %s' % (self.env.now, self.name, phyPkt.macPkt.id))
-        self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
+        self.ether.transmit(phyPkt, self.latitude, self.longitude, True, False) # beginOfPacket=True, endOfPacket=False
 
         duration = macPkt.length * parameters.BIT_TRANSMISSION_TIME + parameters.PHY_HEADER_LENGTH
 
@@ -38,10 +38,10 @@ class Phy(object):
                 yield self.env.timeout(duration)    # wait only remaining time
                 break
             yield self.env.timeout(parameters.SLOT_DURATION) # send a signal every slot
-            self.ether.transmit(phyPkt, self.latitude, self.longitude, False) # end of packet = False
+            self.ether.transmit(phyPkt, self.latitude, self.longitude, False, False)  # beginOfPacket=False, endOfPacket=False
             duration -= parameters.SLOT_DURATION
 
-        self.ether.transmit(phyPkt, self.latitude, self.longitude, True) # end of packet = True
+        self.ether.transmit(phyPkt, self.latitude, self.longitude, False, True)  # beginOfPacket=False, endOfPacket=True
         if macPkt.ack:
             if parameters.PRINT_LOGS:
                 print('Time %d: %s PHY ends transmission of %s ACK' % (self.env.now, self.name, phyPkt.macPkt.id))
@@ -57,7 +57,7 @@ class Phy(object):
 
         while True:
             try:
-                (phyPkt, endOfPacket) = yield inChannel.get()
+                (phyPkt, beginOfPacket, endOfPacket) = yield inChannel.get()
 
                 # the signal just received will interfere with other signals I'm receiving (and vice versa)
                 for receivingPkt in self.receivingPackets:
@@ -69,15 +69,17 @@ class Phy(object):
 
                 if self.mac.isSensing:  # interrupt mac if it is sensing for idle channel
                     self.mac.sensingTimeout.interrupt() # I use endOfPacket to generate backoff in case of channel that becomes idle
-                if phyPkt.power > parameters.RADIO_SENSITIVITY and not phyPkt.corrupted:
-                    if not endOfPacket and phyPkt not in self.receivingPackets:  # start of packet
+
+                if phyPkt.power > parameters.RADIO_SENSITIVITY: # decodable signal
+                    if beginOfPacket:  # begin of packet
                         self.receivingPackets.append(phyPkt)
                     elif endOfPacket:   # end of packet
-                        if phyPkt in self.receivingPackets:     # in consider is only if I received the begin of the packet, otherwise I ignore it, as it is for sure corrupted
+                        if phyPkt in self.receivingPackets: # in consider is only if I received the begin of the packet, otherwise I ignore it, as it is for sure corrupted
                             self.receivingPackets.remove(phyPkt)
-                            sinr = self.computeSinr(phyPkt)
-                            if sinr > 1:    # signal greater than noise and inteference
-                                self.env.process(self.mac.handleReceivedPacket(phyPkt.macPkt))
+                            if not phyPkt.corrupted:
+                                sinr = self.computeSinr(phyPkt)
+                                if sinr > 1:    # signal greater than noise and inteference
+                                    self.env.process(self.mac.handleReceivedPacket(phyPkt.macPkt))
 
             except simpy.Interrupt as macPkt:        # listening can be interrupted by a message sending
                 self.ether.removeInChannel(inChannel, self)

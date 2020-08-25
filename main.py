@@ -15,19 +15,27 @@ def main():
 
     for i in range(0, parameters.NUMBER_OF_NODES):
         name = "Node" + str(i)
-        nodes.append(node.Node(env, name, eth, random.randint(0,50), random.randint(0,50), statistics))
+        nodes.append(node.Node(env, name, eth, random.randint(0,40), random.randint(0,40), statistics))
 
     for i in range(0, parameters.NUMBER_OF_NODES):
         destinations = []
         for j in range(0, parameters.NUMBER_OF_NODES):
             if i != j:
                 destinations.append(nodes[j].name)
-        env.process(nodes[i].keepSending(1, 1000, destinations))
+        env.process(nodes[i].keepSending(parameters.STARTING_RATE, parameters.TARGET_RATE, destinations))
+
+    if not parameters.PRINT_LOGS:
+        env.process(printProgress(env))
 
     env.run(until=parameters.SIM_TIME)
 
-    #statistics.plotCumulativePackets()
+    statistics.plotCumulativePackets()
     statistics.plotThroughput()
+
+def printProgress(env):
+    while True:
+        print('Progress: %d / %d' % (env.now * 1e-9, parameters.SIM_TIME * 1e-9))
+        yield env.timeout(1e9)
 
 if __name__ == '__main__':
     main()

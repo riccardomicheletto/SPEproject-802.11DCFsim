@@ -11,9 +11,11 @@ from scipy.constants import c
 
 
 ### SIMULATION PARAMETERS
-SIM_TIME = 50 * 1e9
-PRINT_LOGS = False
-NUMBER_OF_NODES = 20
+SIM_TIME = 8 * 1e9
+PRINT_LOGS = True
+NUMBER_OF_NODES = 4
+STARTING_RATE = 1
+TARGET_RATE = 5
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP

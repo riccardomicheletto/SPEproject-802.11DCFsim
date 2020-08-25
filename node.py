@@ -12,6 +12,7 @@ class Node(object):
         self.longitude = longitude
         self.stats = stats
         self.mac = mac.Mac(self)
+        print('%s created with coordinates %d %d' % (self.name, self.latitude, self.longitude))
 
     def send(self, destination, length, id):
         if self.name == "Node 2":

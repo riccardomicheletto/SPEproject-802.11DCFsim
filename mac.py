@@ -56,7 +56,6 @@ class Mac(object):
             self.retransmissionCounter[macPkt.id] += 1
             self.isSensing = True
             self.sensingTimeout = self.env.process(self.waitIdleAndSend(macPkt))
-
         except simpy.Interrupt:
             # ack received
             self.pendingPackets.pop(macPkt.id)
@@ -90,7 +89,6 @@ class Mac(object):
                     continue
 
                 self.env.process(self.phy.send(macPkt))
-                self.stats.logSentPacket(self.env.now)
                 self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt))
                 return
             except simpy.Interrupt:
