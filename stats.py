@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 import parameters
 
 class Stats(object):
@@ -108,7 +109,7 @@ class Stats(object):
 
         seconds = np.arange(0, int(parameters.SIM_TIME * 1e-9), 1)
 
-        plt.plot(seconds, retransmissionsEverySecond, 'r:', label='Generated')
+        plt.plot(seconds, retransmissionsEverySecond, 'r:', label='Retransmissions')
 
         plt.legend()
         plt.xlabel('Time')

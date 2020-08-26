@@ -1,12 +1,14 @@
 import simpy
+import random
+
 import node
 import phy
 import ether
 import parameters
 import stats
-import random
 
 def main():
+    random.seed(parameters.RANDOM_SEED)
     env = simpy.Environment()
     eth = ether.Ether(env)
     statistics = stats.Stats()

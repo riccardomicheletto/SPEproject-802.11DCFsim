@@ -1,8 +1,9 @@
 import simpy
 import math
 from scipy.constants import c, pi
-import parameters
 import random
+
+import parameters
 
 class Ether(object):
     def __init__(self, env, capacity=simpy.core.Infinity):
@@ -10,6 +11,7 @@ class Ether(object):
         self.capacity = capacity
         self.channels = []
         self.listeningNodes = []
+        random.seed(parameters.RANDOM_SEED)
 
     def computeDistance(self, senderLatitude, senderLongitude, receiverLatitude, receiverLongitude):
         return math.sqrt(pow(senderLatitude - receiverLatitude, 2) + pow(senderLongitude - receiverLongitude, 2))

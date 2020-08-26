@@ -1,8 +1,9 @@
 import simpy
+import random
+
 import phy
 import macPacket
 import parameters
-import random
 import stats
 
 class Mac(object):
@@ -19,16 +20,23 @@ class Mac(object):
         self.retransmissionCounter = {}     # associate packets I'm trying to transmit and transmission attempts
         self.isSensing = False
         self.packetsToSend = []
+        self.sensing = None  # keep sensing process
+        random.seed(parameters.RANDOM_SEED)
 
     def send(self, destination, payloadLength, id):
         length = payloadLength + parameters.MAC_HEADER_LENGTH
         macPkt = macPacket.MacPacket(self.name, destination, length, id, False)
         self.stats.logGeneratedPacket(id, self.env.now)
+        self.retransmissionCounter[macPkt.id] = 0
 
         # sensing phase
-        self.retransmissionCounter[macPkt.id] = 0
-        self.isSensing = True
-        self.sensingTimeout = self.env.process(self.waitIdleAndSend(macPkt))
+        if self.phy.isSending:   # I cannot sense while sending
+            yield self.phy.transmission   # wait for my phy to finish sending other packets
+
+        if self.isSensing: # I'm sensing for another packet, I wait
+            yield self.sensing
+
+        self.sensing = self.env.process(self.waitIdleAndSend(macPkt))
 
     def handleReceivedPacket(self, macPkt):
         if macPkt.destination == self.name and not macPkt.ack:  # send ack to normal packets
@@ -38,7 +46,7 @@ class Mac(object):
             self.stats.logDeliveredPacket(macPkt.id, self.env.now)
             ack = macPacket.MacPacket(self.name, macPkt.source, parameters.ACK_LENGTH, macPkt.id, True)
             yield self.env.timeout(parameters.SIFS_DURATION)
-            self.env.process(self.phy.send(ack))
+            self.phy.send(ack)
         elif macPkt.destination == self.name:
             if parameters.PRINT_LOGS:
                 print('Time %d: %s MAC receives ACK %s from %s' % (self.env.now, self.name, macPkt.id, macPkt.source))
@@ -47,24 +55,30 @@ class Mac(object):
 
     def waitAck(self, macPkt):
         try:
-            yield self.env.timeout(parameters.ACK_TIMEOUT)
+            yield self.env.timeout(parameters.ACK_TIMEOUT)  # TODO: check that I don't retransmit forever if destination is unreachable
             # timeout expired, resend
-            # TODO: check that I don't retransmit forever if destination is unreachable
+
             if parameters.PRINT_LOGS:
                 print('Time %d: %s MAC retransmit %s to %s' % (self.env.now, self.name, macPkt.id, macPkt.destination))
             self.pendingPackets.pop(macPkt.id)
             self.retransmissionCounter[macPkt.id] += 1
-            self.isSensing = True
+
+            # sensing phase
+            if self.phy.isSending:   # I cannot sense while sending
+                yield self.phy.transmission   # wait for my phy to finish sending other packets
+
+            if self.isSensing: # I'm sensing for another packet, I wait
+                yield self.sensing
+
             self.stats.logRetransmission(self.env.now)
-            self.sensingTimeout = self.env.process(self.waitIdleAndSend(macPkt))
+            self.sensing = self.env.process(self.waitIdleAndSend(macPkt))
         except simpy.Interrupt:
             # ack received
             self.pendingPackets.pop(macPkt.id)
             self.retransmissionCounter.pop(macPkt.id)
 
     def waitIdleAndSend(self, macPkt):
-        while self.phy.isSending:   # I cannot sense while sending
-            yield self.env.timeout(1)   # wait for my phy to finish sending other packets
+        self.isSensing = True
 
         timeout = parameters.DIFS_DURATION
         backoff = 0
@@ -78,22 +92,16 @@ class Mac(object):
                     yield self.env.timeout(1)
                     timeout -= 1
 
+                    # sensing phase
                     if self.phy.isSending:   # I cannot sense while sending
-                        # if a trasmission occours during the sensing I restart the sensing phase from scratch
-                        timeout = parameters.DIFS_DURATION + backoff
+                        yield self.phy.transmission   # wait for my phy to finish sending other packets
+                        timeout = parameters.DIFS_DURATION + backoff    # if a trasmission occours during the sensing I restart the sensing phase from scratch
 
-                self.isSensing = False
-
-                if self.phy.isSending:
-                    # if a trasmission occours during the sensing I restart the sensing phase from scratch
-                    timeout = parameters.DIFS_DURATION + backoff
-                    continue
-
-                self.env.process(self.phy.send(macPkt))
+                self.phy.send(macPkt)
                 self.pendingPackets[macPkt.id] = self.env.process(self.waitAck(macPkt))
+                self.isSensing = False
                 return
             except simpy.Interrupt:
-
                 if backoff == 0:    # need to add backoff, even if this is not a retransmission
                     backoff = random.randint(0, parameters.CW_MIN-1) * parameters.SLOT_DURATION
                     timeout = parameters.DIFS_DURATION + backoff

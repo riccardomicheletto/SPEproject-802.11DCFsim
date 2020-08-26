@@ -1,6 +1,7 @@
 import simpy
-import mac
 import random
+
+import mac
 import parameters
 
 class Node(object):
@@ -12,6 +13,7 @@ class Node(object):
         self.longitude = longitude
         self.stats = stats
         self.mac = mac.Mac(self)
+        random.seed(parameters.RANDOM_SEED)
         print('%s created with coordinates %d %d' % (self.name, self.latitude, self.longitude))
 
     def send(self, destination, length, id):
@@ -19,7 +21,7 @@ class Node(object):
             yield self.env.timeout(2000)
         if parameters.PRINT_LOGS:
             print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-        self.mac.send(destination, length, id)
+        self.env.process(self.mac.send(destination, length, id))
 
     def receive(self, id, source):
         if parameters.PRINT_LOGS:
@@ -34,7 +36,7 @@ class Node(object):
             id = str(self.env.now) + '_' + self.name + '_' + destination
             if parameters.PRINT_LOGS:
                 print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-            self.mac.send(destination, length, id)
+            self.env.process(self.mac.send(destination, length, id))
 
     def keepSending(self, startingRate, finalRate, destinationNodes):
         rate = startingRate
@@ -47,4 +49,4 @@ class Node(object):
             id = str(self.env.now) + '_' + self.name + '_' + destination
             if parameters.PRINT_LOGS:
                 print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-            self.mac.send(destination, length, id)
+            self.env.process(self.mac.send(destination, length, id))
