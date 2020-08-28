@@ -18,9 +18,8 @@ class Phy(object):
 
 
     def send(self, macPkt):
-        if self.isSending:
-            print('%s INVALID' % (self.name))
-        self.listen.interrupt(macPkt)
+        if not self.isSending:  # I do not send if I'm already sending
+            self.listen.interrupt(macPkt)
 
 
     def encapsulateAndTransmit(self, macPkt):

@@ -21,7 +21,6 @@ class Mac(object):
         self.isSensing = False
         self.packetsToSend = []
         self.sensing = None  # keep sensing process
-        random.seed(parameters.RANDOM_SEED)
 
     def send(self, destination, payloadLength, id):
         length = payloadLength + parameters.MAC_HEADER_LENGTH
@@ -37,6 +36,8 @@ class Mac(object):
             yield self.sensing
 
         self.sensing = self.env.process(self.waitIdleAndSend(macPkt))
+        yield self.sensing
+
 
     def handleReceivedPacket(self, macPkt):
         if macPkt.destination == self.name and not macPkt.ack:  # send ack to normal packets
@@ -52,6 +53,7 @@ class Mac(object):
                 print('Time %d: %s MAC receives ACK %s from %s' % (self.env.now, self.name, macPkt.id, macPkt.source))
             if macPkt.id in self.pendingPackets:    # packet could not be in pendingPackets if timeout has expired but ack still arrive
                 self.pendingPackets[macPkt.id].interrupt()
+
 
     def waitAck(self, macPkt):
         try:
@@ -76,6 +78,7 @@ class Mac(object):
             # ack received
             self.pendingPackets.pop(macPkt.id)
             self.retransmissionCounter.pop(macPkt.id)
+
 
     def waitIdleAndSend(self, macPkt):
         self.isSensing = True

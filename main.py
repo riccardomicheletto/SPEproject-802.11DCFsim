@@ -8,7 +8,6 @@ import parameters
 import stats
 
 def main():
-    random.seed(parameters.RANDOM_SEED)
     env = simpy.Environment()
     eth = ether.Ether(env)
     statistics = stats.Stats()
@@ -36,10 +35,12 @@ def main():
     statistics.plotDelays()
     statistics.plotRetransmissions()
 
+
 def printProgress(env):
     while True:
         print('Progress: %d / %d' % (env.now * 1e-9, parameters.SIM_TIME * 1e-9))
         yield env.timeout(1e9)
+
 
 if __name__ == '__main__':
     main()

@@ -9,22 +9,28 @@ class Stats(object):
         self.deliveredPacketsTimes = {}    # packet id - timestamp of delivery
         self.retransmissionTimes = []   # timestamps of retransmissions
 
+
     def logGeneratedPacket(self, id, timestamp):
         self.generatedPacketsTimes[id] = timestamp * 1e-9
+
 
     def logDeliveredPacket(self, id, timestamp):
         self.deliveredPacketsTimes[id] = timestamp * 1e-9
 
+
     def logRetransmission(self, timestamp):
         self.retransmissionTimes.append(timestamp * 1e-9)
+
 
     def printGeneratedPacketTimes(self):
         for generatedPacket in self.generatedPacketsTimes:
             print (self.generatedPacketsTimes[generatedPacket])
 
+
     def printDeliveredPacketTimes(self):
         for deliveredPacket in self.deliveredPacketsTimes:
             print (self.deliveredPacketsTimes[deliveredPacket])
+
 
     def plotCumulativePackets(self):
         plt.figure(1)
@@ -56,6 +62,7 @@ class Stats(object):
         plt.legend()
         plt.savefig('results/packets.pdf',bbox_inches='tight', dpi=250)
 
+
     def plotThroughput(self):
         plt.figure(2)
         packetsGeneratedEverySecond = []
@@ -81,6 +88,7 @@ class Stats(object):
         plt.legend()
         plt.savefig('results/throughput.pdf',bbox_inches='tight', dpi=250)
 
+
     def plotDelays(self):
         plt.figure(3)
         delays = []
@@ -97,6 +105,7 @@ class Stats(object):
         plt.ylabel('Delay')
         plt.legend()
         plt.savefig('results/delays.pdf',bbox_inches='tight', dpi=250)
+
 
     def plotRetransmissions(self):
         plt.figure(4)

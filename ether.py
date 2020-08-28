@@ -11,10 +11,11 @@ class Ether(object):
         self.capacity = capacity
         self.channels = []
         self.listeningNodes = []
-        random.seed(parameters.RANDOM_SEED)
+
 
     def computeDistance(self, senderLatitude, senderLongitude, receiverLatitude, receiverLongitude):
         return math.sqrt(pow(senderLatitude - receiverLatitude, 2) + pow(senderLongitude - receiverLongitude, 2))
+
 
     def latencyAndAttenuation(self, phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, beginOfPacket, endOfPacket):
         distance = self.computeDistance(sourceLatitude, sourceLongitude, destinationNode.latitude, destinationNode.longitude) + 1e-3 # add 1mm to avoid distance=0
@@ -29,15 +30,18 @@ class Ether(object):
 
         return destinationChannel.put((phyPkt, beginOfPacket, endOfPacket))
 
+
     def transmit(self, phyPkt, sourceLatitude, sourceLongitude, beginOfPacket, endOfPacket):
         events = [self.env.process(self.latencyAndAttenuation(phyPkt, sourceLatitude, sourceLongitude, destinationChannel, destinationNode, beginOfPacket, endOfPacket)) for destinationChannel, destinationNode in zip(self.channels, self.listeningNodes)]
         return self.env.all_of(events)
+
 
     def getInChannel(self, node):
         channel = simpy.Store(self.env, capacity=self.capacity)
         self.channels.append(channel)
         self.listeningNodes.append(node)
         return channel
+
 
     def removeInChannel(self, inChannel, node):
         self.channels.remove(inChannel)

@@ -13,30 +13,34 @@ class Node(object):
         self.longitude = longitude
         self.stats = stats
         self.mac = mac.Mac(self)
-        random.seed(parameters.RANDOM_SEED)
         print('%s created with coordinates %d %d' % (self.name, self.latitude, self.longitude))
+
 
     def send(self, destination, length, id):
         if self.name == "Node 2":
             yield self.env.timeout(2000)
         if parameters.PRINT_LOGS:
             print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-        self.env.process(self.mac.send(destination, length, id))
+        yield self.env.process(self.mac.send(destination, length, id))
+
 
     def receive(self, id, source):
         if parameters.PRINT_LOGS:
             print('Time %d: %s receives %s from %s' % (self.env.now, self.name, id, source))
 
+
     def keepSending(self, rate, destinationNodes):
         while True:
             yield self.env.timeout(round(random.expovariate(rate) * 1e9))  # inter-messages time is a poisson process
+            # NB: inter-message time start after mac has served previous message, to make sure that mac does not handle multiple messages concurrently
 
             destination = destinationNodes[random.randint(0, len(destinationNodes)-1)]
             length = random.randint(0, parameters.MAX_MAC_PAYLOAD_LENGTH)
             id = str(self.env.now) + '_' + self.name + '_' + destination
             if parameters.PRINT_LOGS:
                 print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-            self.env.process(self.mac.send(destination, length, id))
+            yield self.env.process(self.mac.send(destination, length, id))
+
 
     def keepSending(self, startingRate, finalRate, destinationNodes):
         rate = startingRate
@@ -49,4 +53,4 @@ class Node(object):
             id = str(self.env.now) + '_' + self.name + '_' + destination
             if parameters.PRINT_LOGS:
                 print('Time %d: %s sends %s to %s' % (self.env.now, self.name, id, destination))
-            self.env.process(self.mac.send(destination, length, id))
+            yield self.env.process(self.mac.send(destination, length, id))
