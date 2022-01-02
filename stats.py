@@ -67,41 +67,6 @@ class Stats(object):
         print("Total number of generated packets: {}".format(len(generatedPacketsTimes)))
         print("Total number of delivered packets: {}".format(len(deliveredPacketsTimes)))
 
-    
-    # def functionForDerivativeGenerated(self, x):
-    #     return self.generatedPacketsTimes[x]
-
-    # def functionForDerivativeDelivered(self, x):
-    #     return self.deliveredPacketsTimes[x]
-
-    # def plotThroughput(self):
-    #     plt.figure(2)
-
-    #     generatedPacketsTimes = []
-    #     for packet in self.generatedPacketsTimes:
-    #         generatedPacketsTimes.append(self.generatedPacketsTimes[packet] * 1e-9)
-
-    #     deliveredPacketsTimes = []
-    #     for packet in self.deliveredPacketsTimes:
-    #         deliveredPacketsTimes.append(self.deliveredPacketsTimes[packet] * 1e-9)
-
-    #     generatedThroughput = self.functionForDerivativeGenerated(generatedPacketsTimes)
-    #     generatedThroughput = misc.derivative(generatedThroughput, generatedPacketsTimes)
-
-    #     deliveredThroughput = self.functionForDerivativeDelivered(deliveredPacketsTimes)
-    #     deliveredThroughput = misc.derivative(deliveredThroughput, deliveredPacketsTimes)
-
-
-    #     plt.plot(generatedPacketsTimes, generatedThroughput, 'r:', label='Generated')
-    #     plt.plot(deliveredPacketsTimes, deliveredThroughput, 'g:', label='Delivered')
-
-    #     plt.legend()
-    #     plt.xlabel('Time')
-    #     plt.ylabel('Throughput')
-    #     plt.legend()
-    #     file = 'results/throughput' + str(parameters.TARGET_RATE) + '.pdf'
-    #     plt.savefig(file, bbox_inches='tight', dpi=250)
-
     def plotThroughputMs(self):
         plt.figure(2)
         packetsGeneratedEveryMillisecond = []
