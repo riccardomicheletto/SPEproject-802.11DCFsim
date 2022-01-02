@@ -23,7 +23,8 @@ def main():
         for j in range(0, parameters.NUMBER_OF_NODES):
             if i != j:
                 destinations.append(nodes[j].name)
-        env.process(nodes[i].keepSending(parameters.STARTING_RATE, parameters.TARGET_RATE, destinations))
+        env.process(nodes[i].keepSendingIncreasing(parameters.STARTING_RATE, parameters.TARGET_RATE, destinations))
+        #env.process(nodes[i].keepSending(parameters.TARGET_RATE, destinations))
 
     if not parameters.PRINT_LOGS:
         env.process(printProgress(env))

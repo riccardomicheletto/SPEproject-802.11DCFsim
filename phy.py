@@ -92,7 +92,7 @@ class Phy(object):
                             self.receivingPackets.remove(phyPkt)
                             if not phyPkt.corrupted:
                                 sinr = self.computeSinr(phyPkt)
-                                if sinr > 1:    # signal greater than noise and inteference
+                                if sinr > 10:    # signal greater than noise and inteference
                                     self.env.process(self.mac.handleReceivedPacket(phyPkt.macPkt))
 
             except simpy.Interrupt as macPkt:        # listening can be interrupted by a message sending

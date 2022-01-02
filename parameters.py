@@ -9,13 +9,12 @@ from scipy.constants import c
 # https://en.wikipedia.org/wiki/Short_Interframe_Space
 # Freq: 2.4 GHz, OFDM, 20 MHz bandwidth, 54 Mbit/s
 
-
 ### SIMULATION PARAMETERS
 SIM_TIME = 10 * 1e9
-PRINT_LOGS = False
-NUMBER_OF_NODES = 15
-STARTING_RATE = 1
-TARGET_RATE = 300
+PRINT_LOGS = True
+NUMBER_OF_NODES = 20
+STARTING_RATE = 5
+TARGET_RATE = 5
 
 ### RADIO PARAMETERS
 TRANSMITTING_POWER = 0.1 # Watt, legal limit in EU for EIRP
@@ -29,7 +28,7 @@ WAVELENGTH = c/FREQUENCY
 ### PHY PARAMETERS
 BITRATE = 54000000 # 54 Mbit/s, 802.11g 20 MHz channels
 BIT_TRANSMISSION_TIME = 1/BITRATE * 1e9
-NOISE_FLOOR = 1e-12
+NOISE_FLOOR = 1e-9
 PHY_HEADER_LENGTH = 128
 PACKET_LOSS_RATE = 0.01 # 1% of packets are corrupted
 

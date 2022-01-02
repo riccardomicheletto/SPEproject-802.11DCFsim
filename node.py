@@ -42,7 +42,7 @@ class Node(object):
             yield self.env.process(self.mac.send(destination, length, id))
 
 
-    def keepSending(self, startingRate, finalRate, destinationNodes):
+    def keepSendingIncreasing(self, startingRate, finalRate, destinationNodes):
         rate = startingRate
         increasingSpeed = (finalRate - startingRate) / parameters.SIM_TIME
         while True:
